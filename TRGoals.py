@@ -21,7 +21,7 @@ class TRGoals:
             raise ValueError("M3U dosyasında 'trgoals' içeren referer domain bulunamadı!")
 
     def trgoals_domaini_al(self):
-        redirect_url = "https://bit.ly/m/taraftarium24w"
+        redirect_url = "https://trgoals1446.xyz/"
         deneme = 0
         while "bit.ly" in redirect_url and deneme < 5:
             try:
