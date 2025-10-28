@@ -1,14 +1,12 @@
-
-
 from Kekik.cli import konsol
-from httpx     import Client
+from httpx     import Client, RequestError
 from parsel    import Selector
 import re
 
 class TRGoals:
     def __init__(self, m3u_dosyasi):
         self.m3u_dosyasi = m3u_dosyasi
-        self.httpx       = Client(timeout=10, verify=False)
+        self.httpx       = Client(timeout=10, verify=False, follow_redirects=True)
 
     def referer_domainini_al(self):
         referer_deseni = r'#EXTVLCOPT:http-referrer=(https?://[^/]*trgoals[^/]*\.[^\s/]+)'
@@ -43,15 +41,16 @@ class TRGoals:
     def redirect_gec(self, redirect_url: str):
         konsol.log(f"[cyan][~] redirect_gec çağrıldı: {redirect_url}")
         try:
-            response = self.httpx.get(redirect_url, follow_redirects=True)
+            response = self.httpx.get(redirect_url)
+            response.raise_for_status()
+        except RequestError as e:
+            raise ValueError(f"Redirect sırasında bağlantı hatası oluştu: {e}")
         except Exception as e:
-            raise ValueError(f"Redirect sırasında hata oluştu: {e}")
+            raise ValueError(f"Redirect sırasında beklenmeyen hata oluştu: {e}")
 
-        
         tum_url_listesi = [str(r.url) for r in response.history] + [str(response.url)]
 
-        
-        for url in tum_url_listesi[::-1]:  
+        for url in tum_url_listesi[::-1]:
             if "trgoals" in url:
                 return url.strip("/")
 
@@ -64,21 +63,17 @@ class TRGoals:
             return domain
 
         try:
-            
             yeni_domain = check_domain(self.redirect_gec(eldeki_domain))
         except Exception:
             konsol.log("[red][!] `redirect_gec(eldeki_domain)` fonksiyonunda hata oluştu.")
             try:
-                
                 yeni_domain = check_domain(self.trgoals_domaini_al())
             except Exception:
                 konsol.log("[red][!] `trgoals_domaini_al` fonksiyonunda hata oluştu.")
                 try:
-                    
                     yeni_domain = check_domain(self.redirect_gec("https://t.co/MTLoNVkGQN"))
                 except Exception:
                     konsol.log("[red][!] `redirect_gec('https://t.co/MTLoNVkGQN')` fonksiyonunda hata oluştu.")
-                    
                     rakam = int(eldeki_domain.split("trgoals")[1].split(".")[0]) + 1
                     yeni_domain = f"https://trgoals{rakam}.xyz"
 
@@ -93,6 +88,12 @@ class TRGoals:
 
         kontrol_url = f"{yeni_domain}/channel.html?id=yayin1"
 
+        try:
+            response = self.httpx.get(kontrol_url)
+            response.raise_for_status()
+        except Exception as e:
+            raise ValueError(f"Yayın kontrol URL'si alınamadı: {e}")
+
         with open(self.m3u_dosyasi, "r") as dosya:
             m3u_icerik = dosya.read()
 
@@ -101,9 +102,6 @@ class TRGoals:
 
         eski_yayin_url = eski_yayin_url[0]
         konsol.log(f"[yellow][~] Eski Yayın URL : {eski_yayin_url}")
-
-        
-        response = self.httpx.get(kontrol_url, follow_redirects=True)
 
         if not (yayin_ara := re.search(r'(?:var|let|const)\s+baseurl\s*=\s*"(https?://[^"]+)"', response.text)):
             secici = Selector(response.text)
