@@ -30,13 +30,8 @@ jobs:
       - name: TRGoals.py Çalıştır
         run: python TRGoals.py
 
-      - name: TRGoal.py Çalıştır
-        run: python trgoal.py
-        
       - name: MonoTV.py Çalıştır
         run: python MonoTV.py
-        
-      
 
       - name: Alive 1
         run: curl https://kerimmkirac-dproxy.hf.space
@@ -50,22 +45,12 @@ jobs:
       - name: Alive 4
         run: curl https://kerimmkirac-vavoo.hf.space/
 
-      
-
       - name: Daddylive
         run: python daddylive.py
 
-      
       - name: Daddylive Events
         run: python daddyliveevents.py
 
-
-
-        
-      
-      
-      
-          
       - name: Değişiklik Kontrolü
         id: degisiklik_kontrol
         run: |
