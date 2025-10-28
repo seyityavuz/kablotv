@@ -6,7 +6,7 @@ import re
 class TRGoals:
     def __init__(self, m3u_dosyasi):
         self.m3u_dosyasi = m3u_dosyasi
-        self.httpx       = Client(timeout=10, verify=False, follow_redirects=True)
+        self.httpx       = Client(timeout=30, verify=False, follow_redirects=True)
 
     def referer_domainini_al(self):
         referer_deseni = r'#EXTVLCOPT:http-referrer=(https?://[^/]*trgoals[^/]*\.[^\s/]+)'
@@ -92,7 +92,8 @@ class TRGoals:
             response = self.httpx.get(kontrol_url)
             response.raise_for_status()
         except Exception as e:
-            raise ValueError(f"Yayın kontrol URL'si alınamadı: {e}")
+            konsol.log(f"[yellow][!] kontrol_url alınamadı, eski yayın URL'si kullanılacak: {e}")
+            response = None
 
         with open(self.m3u_dosyasi, "r") as dosya:
             m3u_icerik = dosya.read()
@@ -103,17 +104,18 @@ class TRGoals:
         eski_yayin_url = eski_yayin_url[0]
         konsol.log(f"[yellow][~] Eski Yayın URL : {eski_yayin_url}")
 
-        if not (yayin_ara := re.search(r'(?:var|let|const)\s+baseurl\s*=\s*"(https?://[^"]+)"', response.text)):
-            secici = Selector(response.text)
-            baslik = secici.xpath("//title/text()").get()
-            if baslik == "404 Not Found":
-                yeni_domain = eldeki_domain
-                yayin_ara   = [None, eski_yayin_url]
-            else:
-                konsol.print(response.text)
-                raise ValueError("Base URL bulunamadı!")
+        yayin_url = eski_yayin_url  # varsayılan olarak eskiyi kullan
 
-        yayin_url = yayin_ara[1]
+        if response and response.text:
+            if yayin_ara := re.search(r'(?:var|let|const)\s+baseurl\s*=\s*"(https?://[^"]+)"', response.text):
+                yayin_url = yayin_ara[1]
+            else:
+                secici = Selector(response.text)
+                baslik = secici.xpath("//title/text()").get()
+                if baslik != "404 Not Found":
+                    konsol.print(response.text)
+                    raise ValueError("Base URL bulunamadı!")
+
         konsol.log(f"[green][+] Yeni Yayın URL : {yayin_url}")
 
         yeni_m3u_icerik = m3u_icerik.replace(eski_yayin_url, yayin_url)
