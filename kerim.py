@@ -1,5 +1,13 @@
 import re
 import os
+import logging
+
+# Log yapılandırması
+logging.basicConfig(
+    filename='kerim.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 KANAL_ADLARI = {
     "Szc Tv": "3002",
@@ -53,22 +61,24 @@ KANAL_ADLARI = {
     "Viasat Explore": "2807",
     "Cgtn Documentary": "2607",
     "Film Screen": "3509"
-    
 }
 
 def parse_m3u(file_path):
     kanallar = {}
     mevcut_kanal_adi = None
 
-    with open(file_path, 'r', encoding='utf-8') as f:
-        for satir in f:
-            satir = satir.strip()
-            if satir.startswith('#EXTINF'):
-                eslesme = re.search(r',\s*(.*)$', satir)
-                mevcut_kanal_adi = eslesme.group(1).strip() if eslesme else None
-            elif satir and not satir.startswith('#') and mevcut_kanal_adi:
-                kanallar[mevcut_kanal_adi] = satir
-                mevcut_kanal_adi = None
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for satir in f:
+                satir = satir.strip()
+                if satir.startswith('#EXTINF'):
+                    eslesme = re.search(r',\s*(.*)$', satir)
+                    mevcut_kanal_adi = eslesme.group(1).strip() if eslesme else None
+                elif satir and not satir.startswith('#') and mevcut_kanal_adi:
+                    kanallar[mevcut_kanal_adi] = satir
+                    mevcut_kanal_adi = None
+    except Exception as e:
+        logging.error(f"{file_path} okunamadı: {e}")
     return kanallar
 
 def update_kerim_m3u():
@@ -76,16 +86,23 @@ def update_kerim_m3u():
     hedef_dosya = '1.m3u'
 
     if not os.path.exists(hedef_dosya):
-        print("kerim.m3u bulunamadı. Yeni oluşturuluyor...")
+        logging.warning("1.m3u bulunamadı, yeni oluşturuluyor.")
+        print("📁 1.m3u bulunamadı. Yeni oluşturuluyor...")
         os.makedirs('Kanallar', exist_ok=True)
         with open(hedef_dosya, 'w', encoding='utf-8') as f:
             f.write("#EXTM3U\n")
 
-    with open(hedef_dosya, 'r', encoding='utf-8') as f:
-        satirlar = f.readlines()
+    try:
+        with open(hedef_dosya, 'r', encoding='utf-8') as f:
+            satirlar = f.readlines()
+    except Exception as e:
+        logging.error(f"{hedef_dosya} okunamadı: {e}")
+        return
 
     guncellenmis = []
+    guncellenen_sayisi = 0
     i = 0
+
     while i < len(satirlar):
         satir = satirlar[i].strip()
         guncellenmis.append(satirlar[i])
@@ -101,7 +118,9 @@ def update_kerim_m3u():
                 i += 1
                 if yeni_url and eski_url != yeni_url:
                     print(f"🔁 {kanal_adi} güncellendi.")
+                    logging.info(f"{kanal_adi} güncellendi.")
                     guncellenmis.append(yeni_url + '\n')
+                    guncellenen_sayisi += 1
                 else:
                     guncellenmis.append(satirlar[i])
             elif i + 1 < len(satirlar):
@@ -109,10 +128,14 @@ def update_kerim_m3u():
                 guncellenmis.append(satirlar[i])
         i += 1
 
-    with open(hedef_dosya, 'w', encoding='utf-8') as f:
-        f.writelines(guncellenmis)
-
-    print("✅ 1.m3u başarıyla güncellendi!")
+    try:
+        with open(hedef_dosya, 'w', encoding='utf-8') as f:
+            f.writelines(guncellenmis)
+        print(f"✅ 1.m3u başarıyla güncellendi! ({guncellenen_sayisi} kanal)")
+        logging.info(f"1.m3u güncellendi. Toplam {guncellenen_sayisi} kanal değiştirildi.")
+    except Exception as e:
+        logging.error(f"{hedef_dosya} yazılamadı: {e}")
+        print(f"❌ Dosya yazma hatası: {e}")
 
 if __name__ == "__main__":
     update_kerim_m3u()
