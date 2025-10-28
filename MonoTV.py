@@ -1,6 +1,6 @@
 import re
 from httpx import Client
-from Kekik.cli import konsol as log
+from Kekik.cli import konsol
 
 class MonoTV:
     def __init__(self, m3u_dosyasi):
@@ -31,10 +31,10 @@ class MonoTV:
             raise ValueError("M3U dosyasında eski yayın URL'si bulunamadı!")
 
         eski_url = eski_url[0]
-        log(f"[yellow][~] Eski Yayın URL : {eski_url}")
+        konsol.log(f"[yellow][~] Eski Yayın URL : {eski_url}")
 
         yeni_url = self.yayin_urlini_al()
-        log(f"[green][+] Yeni Yayın URL : {yeni_url}")
+        konsol.log(f"[green][+] Yeni Yayın URL : {yeni_url}")
 
         yeni_icerik = icerik.replace(eski_url, yeni_url)
 
