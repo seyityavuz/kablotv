@@ -1,2 +1,4 @@
 2025-10-28 14:13:24,302 - ERROR - yeni.m3u okunamadı: [Errno 2] No such file or directory: 'yeni.m3u'
 2025-10-28 14:13:24,304 - INFO - 1.m3u güncellendi. Toplam 0 kanal değiştirildi.
+2025-10-28 16:16:03,527 - ERROR - yeni.m3u okunamadı: [Errno 2] No such file or directory: 'yeni.m3u'
+2025-10-28 16:16:03,530 - INFO - 1.m3u güncellendi. Toplam 0 kanal değiştirildi.
