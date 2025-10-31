@@ -42,12 +42,6 @@ jobs:
       - name: Alive 4
         run: curl https://kerimmkirac-vavoo.hf.space/
 
-      - name: Daddylive
-        run: python daddylive.py
-
-      - name: Daddylive Events
-        run: python daddyliveevents.py
-
       - name: Değişiklik Kontrolü
         id: degisiklik_kontrol
         run: |
